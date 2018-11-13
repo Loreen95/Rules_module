@@ -26,7 +26,8 @@ class rulesController:
     
     @command(command="rules", params=[], access_level="all",
              description="Displays the rules")
-    def rules_command(self, message):
+    def rules_command(self, request):
+        blob = ""
         rules = self.db.query("SELECT * FROM rules ORDER BY priority, indent, identifier, rule ASC")
         admin_link = self.text.make_chatcmd("admin", "/tell <myname> admins")
 
@@ -37,19 +38,17 @@ class rulesController:
             identifier = rule.identifier
 
             if indent > 0:
-                blob += ""
-            
-            blob += "<header>:: Disclaimer :: <end>\n"
-            blob += "The leaders of this bot are free to interpretate the rules in their own way.\n\n"
-            blob += "If you feel like one of the leaders is abusing the status, feel free to message an %s.\n\n" % admin_link
+                blob += "<header>:: Disclaimer :: <end>\n"
+                blob += "The leaders of this bot are free to interpretate the rules in their own way.\n\n"
+                blob += "If you feel like one of the leaders is abusing the status, feel free to message an %s.\n\n" % admin_link
  
-            blob += "<header>:: Rules  ::<end>\n"
+                blob += "<header>:: Rules  ::<end>\n"
 
-            blob += "%s%s <highlight>%s<end>\n" % (priority, identifier, entry)
-            blob += "<pagebreak>"
+                blob += "%s%s <highlight>%s<end>\n" % (priority, identifier, entry)
+                blob += "<pagebreak>"
         
         if rules:
-            return ChatBlob("Rules", rules)
+            return ChatBlob("Rules", blob)
         else:
             return "No rules have been set yet."
 
@@ -60,7 +59,7 @@ class rulesController:
         sql = "INSERT INTO rules (rule, priority, indent) VALUES (?,?,?)"
         count = self.db.exec(sql, [rule, 0, 0])
         
-        layoutlink = self.text.make_chatcmd("rules layout", "/tell <myname> ruleslayout")
+        layoutlink = self.text.make_chatcmd("ruleslayout", "/tell <myname> ruleslayout")
         
         if count > 0:
             return "Successfully added the new rules entry. Use %s to see an editorial overview of rules." % layoutlink
@@ -68,13 +67,13 @@ class rulesController:
             return "Failed to add the new rules entry (DB insertion error)."
     
 
-    @command(command="remrule", params=[Int("rules_id")], access_level="moderator",
+    @command(command="remrule", params=[Int("rule_id")], access_level="moderator",
              description="Removes a rule")
-    def rules_rem_command(self, request, rules_id):            
+    def rules_rem_command(self, request, rule_id):            
         sql = "DELETE FROM rules WHERE id = ?";
         count = self.db.exec(sql, [rule_id]);
         
-        layoutlink = self.text.make_chatcmd("rules layout", "/tell <myname> ruleslayout")
+        layoutlink = self.text.make_chatcmd("ruleslayout", "/tell <myname> ruleslayout")
         
         if count > 0:
             return "Successfully removed the new rules entry. Use %s to see an editorial overview of rules." % layoutlink
@@ -82,13 +81,13 @@ class rulesController:
             return "Failed to remove the new rules entry (DB insertion error)."
     
 
-    @command(command="rulepinc", params=[Int("rules_id"), Int("amount")], access_level="moderator",
-             description="Removes a rule")
-    def rules_pinc_command(self, request, rules_id, amount: int):  
+    @command(command="rulepinc", params=[Int("rule_id"), Int("amount")], access_level="moderator",
+             description="Changes the priority of the rule")
+    def rules_pinc_command(self, request, rule_id, amount: int):  
         sql = "UPDATE rules  SET priority = (priority + 1) WHERE id = ?"
         count = self.db.exec(sql, [rule_id])
 
-        layoutlink = self.text.make_chatcmd("rules layout", "/tell <myname> ruleslayout")
+        layoutlink = self.text.make_chatcmd("ruleslayout", "/tell <myname> ruleslayout")
         
         if count > 0: 
             return "Successfully changed the priority of rule entry %s. Use %s to see an editorial overview of rules." % (rule_id, layoutlink)
@@ -96,13 +95,13 @@ class rulesController:
             return "Failed to change priority of the rule entry (DB update error)."
     
     
-    @command(command="rulepdec", params=[Int("rules_id"), Int("amount")], access_level="moderator",
-             description="Removes a rule")
-    def rules_pdec_command(self, request, rules_id, amount: int):  
+    @command(command="rulepdec", params=[Int("rule_id"), Int("amount")], access_level="moderator",
+             description="Changes the priority of the rule")
+    def rules_pdec_command(self, request, rule_id, amount: int):  
         sql = "UPDATE rules SET priority = (priority - 1) WHERE id = ?"
         count = self.db.exec(sql, [rule_id])
 
-        layoutlink = self.text.make_chatcmd("rules layout", "/tell <myname> ruleslayout")
+        layoutlink = self.text.make_chatcmd("ruleslayout", "/tell <myname> ruleslayout")
         
         if count > 0:
             return "Successfully changed the priority of rule entry %s. Use %s to see an editorial overview of rules." % (rule_id, layoutlink)
@@ -110,13 +109,13 @@ class rulesController:
             return "Failed to change priority of the rule entry (DB update error)."
     
 
-    @command(command="ruleindic", params=[Int("rules_id"), Int("amount")], access_level="moderator",
-             description="Removes a rule")
-    def rules_indic_command(self, request, rules_id, amount: int): 
+    @command(command="ruleindic", params=[Int("rule_id"), Int("amount")], access_level="moderator",
+             description="Changes the indent of the rule")
+    def rules_indic_command(self, request, rule_id, amount: int): 
         sql = "UPDATE rules SET indent = (indent + 1) WHERE id = ?"
         count = self.db.exec(sql, [rule_id])
 
-        layoutlink = self.text.make_chatcmd("rules layout", "/tell <myname> ruleslayout")
+        layoutlink = self.text.make_chatcmd("ruleslayout", "/tell <myname> ruleslayout")
         
         if count > 0:
             return "Successfully changed the indent of rule entry %s. Use %s to see an editorial overview of rules." % (rule_id, layoutlink)
@@ -124,13 +123,13 @@ class rulesController:
             return "Failed to change indent of the rule entry (DB update error)."
 
 
-    @command(command="ruleinddec", params=[Int("rules_id"), Int("amount")], access_level="moderator",
-             description="Removes a rule")
-    def rules_inddec_command(self, request, rules_id, amount: int): 
+    @command(command="ruleinddec", params=[Int("rule_id"), Int("amount")], access_level="moderator",
+             description="Changes the indent of the rule")
+    def rules_inddec_command(self, request, rule_id, amount: int): 
         sql = "UPDATE rules SET indent = (indent - 1) WHERE id = ?"
         count = self.db.exec(sql, [rule_id])
 
-        layoutlink = self.text.make_chatcmd("rules layout", "/tell <myname> ruleslayout")
+        layoutlink = self.text.make_chatcmd("ruleslayout", "/tell <myname> ruleslayout")
         
         if count > 0:
             return "Successfully changed the indent of rule entry %s. Use %s to see an editorial overview of rules." % (rule_id, layoutlink)
@@ -138,27 +137,33 @@ class rulesController:
             return "Failed to change indent of the rule entry (DB update error)."
 
    
-    @command(command="ruleinddec", params=[Int("rules_id"), Int("amount"), Any("word")], access_level="moderator",
-             description="Removes a rule")
-    def rules_alteridentifier_command(self, request, rules_id, amount: int, word: str):
+    @command(command="ruleinddec", params=[Int("rule_id"), Int("amount"), Any("identifier")], access_level="moderator",
+             description="Changes the identifier of the rule")
+    def rules_alteridentifier_command(self, request, rule_id, amount: int, word: str):
         sql = "UPDATE rules SET identifier ? WHERE id = ?"
         count = self.db.exec(sql, [identifier, rule_id])
 
-        layoutlink = self.text.make_chatcmd("rules layout", "/tell <myname> ruleslayout")
+        layoutlink = self.text.make_chatcmd("ruleslayout", "/tell <myname> ruleslayout")
         
         if count > 0:
             return "Successfully changed the identifier of rule entry %s. Use %s to see an editorial overview of rules." % (rule_id, layoutlink)
         else:
             return "Failed to change identifier of the rule entry (DB update error)." 
 
-    @command(command="ruleinddec", params=[], access_level="moderator",
-             description="Removes a rule")
+
+    @command(command="ruleslayout", params=[], access_level="moderator",
+             description="Displays the ruleslayout")
     def rules_layout_command(self, request):
+        blob = ""
         sql = "SELECT * FROM rules ORDER BY priority, indent, identifier, rule ASC";
         rules = self.db.query(sql);
-        
-        admin_link = self.text.make_chatcmd("admin", "/tell <myname> admins")   
 
+        admin_link = self.text.make_chatcmd("admin", "/tell <myname> admins")   
+        incp = self.text.make_chatcmd("p+", "/tell <myname> rulepinc rule_id")
+        decp = self.text.make_chatcmd("p-", "/tell <myname> rulepdec rule_id")
+        inci = self.text.make_chatcmd("i+", "/tell <myname> ruleindinc rule_id")
+        deci = self.text.make_chatcmd("i-", "/tell <myname> ruleinddec rule_id")  
+        
         for rule in rules:
             entry = rule.rule
             priority = rule.priority
@@ -166,24 +171,16 @@ class rulesController:
             identifier = rule.identifier
 
             if indent > 0:
-                blob += ""
-
+                       
+                blob += "<header>:: Disclaimer :: <end>\n"
+                blob += "The leaders of this bot are free to interpretate the rules in their own way.\n\n"
+                blob += "If you feel like one of the leaders is abusing the status, feel free to message an %s.\n\n" % admin_link
+                blob += "<header>:: Rules ::<end>\n"
         
-            incp = self.text.make_chatcmd("p+", "/tell <myname> rulepinc rule_id")
-            decp = self.text.make_chatcmd("p-", "/tell <myname> rulepdec rule_id")
-            inci = self.text.make_chatcmd("i+", "/tell <myname> ruleindinc rule_id")
-            deci = self.text.make_chatcmd("i-", "/tell <myname> ruleinddec rule_id")    
-            
-            blob += "<header>:: Disclaimer :: <end>\n"
-            blob += "The leaders of this bot are free to interpretate the rules in their own way.\n\n"
-            blob += "If you feel like one of the leaders is abusing the status, feel free to message an %s.\n\n" % admin_link
-  
-            blob += "<header>:: Rules  ::<end>\n"
+                blob += "%s%s <highlight>%s<end>" % (priority, identifier, entry)
+                blob += "(p: %s || i: %s || id: %s)" % (priority, indent, rule_id)
+                blob += "[%s] [%s] [%s] [%s]\n" % (incp, decpm, inci, deci)
+                blob += "<pagebreak>"
 
-            blob += "%s%s <highlight>%s<end>" % (priority, identifier, entry)
-            blob += "(p: %s || i: %s || id: %s)" % (priority, indent, rule_id)
-            blob += "[%s] [%s] [%s] [%s]\n" % (incp, decpm, inci, deci)
-            blob += "<pagebreak>"
-
-        return ChatBlob("Ruleslayout", ruleslayout)    
+        return ChatBlob("Ruleslayout", blob)    
         
