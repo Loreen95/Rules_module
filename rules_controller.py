@@ -27,9 +27,20 @@ class rulesController:
     @command(command="rules", params=[], access_level="all",
              description="Displays the rules")
     def rules_command(self, request):
+        rules = self.get_rules()
+        self.bot.send_private_message(request.sender.char_id, ChatBlob("Rules", rules))
+
+    def get_rules(self):
         blob = ""
         rules = self.db.query("SELECT * FROM rules ORDER BY priority, indent, identifier, rule ASC")
         admin_link = self.text.make_chatcmd("admin", "/tell <myname> admins")
+
+        blob += "<header>:: Disclaimer :: <end>\n"
+        blob += "The leaders of this bot are free to interpretate the rules in their own way.\n\n"
+        blob += "If you feel like one of the leaders is abusing the status, feel free to message an %s.\n\n" % admin_link
+ 
+        blob += "<header>:: Rules ::<end>\n"
+
 
         for rule in rules:
             entry = rule.rule
@@ -37,18 +48,12 @@ class rulesController:
             indent = rule.indent
             identifier = rule.identifier
 
-            if indent > 0:
-                blob += "<header>:: Disclaimer :: <end>\n"
-                blob += "The leaders of this bot are free to interpretate the rules in their own way.\n\n"
-                blob += "If you feel like one of the leaders is abusing the status, feel free to message an %s.\n\n" % admin_link
- 
-                blob += "<header>:: Rules  ::<end>\n"
+            if indent >= 0:
 
-                blob += "%s%s <highlight>%s<end>\n" % (priority, identifier, entry)
-                blob += "<pagebreak>"
+                blob += "<highlight>%s%s<end> <white>%s<end>\n" % (rule.priority, rule.identifier, rule.rule)
         
         if rules:
-            return ChatBlob("Rules", blob)
+            return blob
         else:
             return "No rules have been set yet."
 
@@ -76,14 +81,14 @@ class rulesController:
         layoutlink = self.text.make_chatcmd("ruleslayout", "/tell <myname> ruleslayout")
         
         if count > 0:
-            return "Successfully removed the new rules entry. Use %s to see an editorial overview of rules." % layoutlink
+            return "Successfully removed the rules entry. Use %s to see an editorial overview of rules." % layoutlink
         else:
             return "Failed to remove the new rules entry (DB insertion error)."
     
 
-    @command(command="rulepinc", params=[Int("rule_id"), Int("amount")], access_level="moderator",
+    @command(command="rulepinc", params=[Int("rule_id")], access_level="moderator",
              description="Changes the priority of the rule")
-    def rules_pinc_command(self, request, rule_id, amount: int):  
+    def rules_pinc_command(self, request, rule_id):  
         sql = "UPDATE rules  SET priority = (priority + 1) WHERE id = ?"
         count = self.db.exec(sql, [rule_id])
 
@@ -95,9 +100,9 @@ class rulesController:
             return "Failed to change priority of the rule entry (DB update error)."
     
     
-    @command(command="rulepdec", params=[Int("rule_id"), Int("amount")], access_level="moderator",
+    @command(command="rulepdec", params=[Int("rule_id")], access_level="moderator",
              description="Changes the priority of the rule")
-    def rules_pdec_command(self, request, rule_id, amount: int):  
+    def rules_pdec_command(self, request, rule_id):  
         sql = "UPDATE rules SET priority = (priority - 1) WHERE id = ?"
         count = self.db.exec(sql, [rule_id])
 
@@ -109,9 +114,9 @@ class rulesController:
             return "Failed to change priority of the rule entry (DB update error)."
     
 
-    @command(command="ruleindic", params=[Int("rule_id"), Int("amount")], access_level="moderator",
+    @command(command="ruleindinc", params=[Int("rule_id")], access_level="moderator",
              description="Changes the indent of the rule")
-    def rules_indic_command(self, request, rule_id, amount: int): 
+    def rules_indic_command(self, request, rule_id): 
         sql = "UPDATE rules SET indent = (indent + 1) WHERE id = ?"
         count = self.db.exec(sql, [rule_id])
 
@@ -123,9 +128,9 @@ class rulesController:
             return "Failed to change indent of the rule entry (DB update error)."
 
 
-    @command(command="ruleinddec", params=[Int("rule_id"), Int("amount")], access_level="moderator",
+    @command(command="ruleinddec", params=[Int("rule_id")], access_level="moderator",
              description="Changes the indent of the rule")
-    def rules_inddec_command(self, request, rule_id, amount: int): 
+    def rules_inddec_command(self, request, rule_id): 
         sql = "UPDATE rules SET indent = (indent - 1) WHERE id = ?"
         count = self.db.exec(sql, [rule_id])
 
@@ -137,9 +142,9 @@ class rulesController:
             return "Failed to change indent of the rule entry (DB update error)."
 
    
-    @command(command="ruleinddec", params=[Int("rule_id"), Int("amount"), Any("identifier")], access_level="moderator",
+    @command(command="rulealteridentifier", params=[Int("rule_id"), Any("identifier")], access_level="moderator",
              description="Changes the identifier of the rule")
-    def rules_alteridentifier_command(self, request, rule_id, amount: int, word: str):
+    def rules_alteridentifier_command(self, request, rule_id, word: str):
         sql = "UPDATE rules SET identifier ? WHERE id = ?"
         count = self.db.exec(sql, [identifier, rule_id])
 
@@ -154,15 +159,21 @@ class rulesController:
     @command(command="ruleslayout", params=[], access_level="moderator",
              description="Displays the ruleslayout")
     def rules_layout_command(self, request):
+        ruleslayout = self.get_rules_layout()
+        self.bot.send_private_message(request.sender.char_id, ChatBlob("Ruleslayout", ruleslayout))
+
+
+    def get_rules_layout(self):    
         blob = ""
         sql = "SELECT * FROM rules ORDER BY priority, indent, identifier, rule ASC";
         rules = self.db.query(sql);
 
         admin_link = self.text.make_chatcmd("admin", "/tell <myname> admins")   
-        incp = self.text.make_chatcmd("p+", "/tell <myname> rulepinc rule_id")
-        decp = self.text.make_chatcmd("p-", "/tell <myname> rulepdec rule_id")
-        inci = self.text.make_chatcmd("i+", "/tell <myname> ruleindinc rule_id")
-        deci = self.text.make_chatcmd("i-", "/tell <myname> ruleinddec rule_id")  
+        
+        blob += "<header>:: Disclaimer :: <end>\n"
+        blob += "The leaders of this bot are free to interpretate the rules in their own way.\n\n"
+        blob += "If you feel like one of the leaders is abusing the status, feel free to message an %s.\n\n" % admin_link
+        blob += "<header>:: Ruleslayout ::<end>\n"
         
         for rule in rules:
             entry = rule.rule
@@ -170,17 +181,16 @@ class rulesController:
             indent = rule.indent
             identifier = rule.identifier
 
-            if indent > 0:
-                       
-                blob += "<header>:: Disclaimer :: <end>\n"
-                blob += "The leaders of this bot are free to interpretate the rules in their own way.\n\n"
-                blob += "If you feel like one of the leaders is abusing the status, feel free to message an %s.\n\n" % admin_link
-                blob += "<header>:: Rules ::<end>\n"
-        
-                blob += "%s%s <highlight>%s<end>" % (priority, identifier, entry)
-                blob += "(p: %s || i: %s || id: %s)" % (priority, indent, rule_id)
-                blob += "[%s] [%s] [%s] [%s]\n" % (incp, decpm, inci, deci)
-                blob += "<pagebreak>"
+            if indent >= 0:
+                
+                incp = self.text.make_chatcmd("p+", "/tell <myname> rulepinc %s") % rule.id
+                decp = self.text.make_chatcmd("p-", "/tell <myname> rulepdec %s") % rule.id
+                inci = self.text.make_chatcmd("i+", "/tell <myname> ruleindinc %s") % rule.id
+                deci = self.text.make_chatcmd("i-", "/tell <myname> ruleinddec %s") % rule.id      
 
-        return ChatBlob("Ruleslayout", blob)    
+                blob += "%s%s <highlight>%s<end>" % (priority, identifier, entry)
+                blob += " (p: %s || i: %s || id: %s)" % (priority, indent, rule.id)
+                blob += " [%s] [%s] [%s] [%s]\n" % (incp, decp, inci, deci)
+
+        return blob
         
